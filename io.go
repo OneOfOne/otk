@@ -38,7 +38,10 @@ func (t *multiWriter) Write(p []byte) (n int, err error) {
 var _ io.StringWriter = (*multiWriter)(nil)
 
 func (t *multiWriter) WriteString(s string) (n int, err error) {
-	var p []byte // lazily initialized if/when needed
+	var (
+		p  []byte // lazily initialized if/when needed
+		ln = len(s)
+	)
 	for i, w := range t.writers {
 		if w == nil {
 			continue
@@ -48,10 +51,11 @@ func (t *multiWriter) WriteString(s string) (n int, err error) {
 		} else {
 			if p == nil {
 				p = []byte(s)
+				ln = len(p)
 			}
 			n, err = w.Write(p)
 		}
-		if err == nil && n != len(p) {
+		if err == nil && n != ln {
 			err = io.ErrShortWrite
 		}
 		if err != nil {
