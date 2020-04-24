@@ -6,11 +6,18 @@ import (
 	"golang.org/x/xerrors"
 )
 
-// Pipe is an io.Pipe helper, returns a io.ReadCloser
-func Pipe(writeFn func(io.Writer) error) io.ReadCloser {
-	rd, rw := io.Pipe()
-	go func() { rw.CloseWithError(writeFn(rw)) }()
+// PipeRd is an io.Pipe helper, returns a io.ReadCloser
+func PipeRd(writeFn func(io.Writer) error) io.ReadCloser {
+	rd, wr := io.Pipe()
+	go func() { wr.CloseWithError(writeFn(wr)) }()
 	return rd
+}
+
+// PipeWr is an io.Pipe helper, returns a io.WriteCloser
+func PipeWr(readerFn func(io.Reader) error) io.WriteCloser {
+	rd, wr := io.Pipe()
+	go func() { rd.CloseWithError(readerFn(rd)) }()
+	return wr
 }
 
 type multiWriter struct {

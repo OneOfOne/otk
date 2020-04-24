@@ -1,7 +1,6 @@
 package otk
 
 import (
-	"log"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -15,7 +14,6 @@ var prefixPath string
 
 func initRelative() {
 	_, fileName, _, _ := runtime.Caller(0)
-	log.Println(fileName)
 	prefixPath = filepath.Dir(fileName)
 }
 

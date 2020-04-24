@@ -5,11 +5,12 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"golang.org/x/xerrors"
 )
 
 type HTTPClient struct {
@@ -87,8 +88,9 @@ func (c *HTTPClient) RequestCtx(ctx context.Context, method, contentType, uri st
 
 	resp, err := c.Do(req)
 	if err != nil {
-		return fmt.Errorf("%s error: %v", req.URL, err)
+		return xerrors.Errorf("%s error: %w", req.URL, err)
 	}
+	defer resp.Body.Close()
 
 	switch out := respData.(type) {
 	case nil:
@@ -103,7 +105,6 @@ func (c *HTTPClient) RequestCtx(ctx context.Context, method, contentType, uri st
 	default:
 		err = json.NewDecoder(resp.Body).Decode(out)
 	}
-	resp.Body.Close()
 
 	return err
 }
