@@ -96,6 +96,8 @@ func (c *HTTPClient) RequestCtx(ctx context.Context, method, contentType, uri st
 	case nil:
 	case io.Writer:
 		_, err = io.Copy(out, resp.Body)
+	case io.ReaderFrom:
+		_, err = out.ReadFrom(resp.Body)
 	case func(r io.Reader) error:
 		err = out(resp.Body)
 	case func(status int, r io.Reader) error:
