@@ -83,32 +83,42 @@ func TarFolder(folder, fp string, topts *TarOptions) (err error) {
 			return nil
 		}
 
-		return AppendToTar(tw, path, p, fi)
+		if err = AppendToTar(tw, path, p); err != nil {
+			err = xerrors.Errorf("tar error (%s): %w", path, err)
+		}
+		return err
 	})
 
 	return
 }
 
 // AppendToTar is a helper function for add a physical file to tar
-func AppendToTar(tw *tar.Writer, fullPath, tarPath string, fi os.FileInfo) error {
-	hdr, err := tar.FileInfoHeader(fi, tarPath)
-	if err != nil {
+func AppendToTar(tw *tar.Writer, fullPath, tarPath string) (err error) {
+	var (
+		f   *os.File
+		st  os.FileInfo
+		hdr *tar.Header
+	)
+	if f, err = os.Open(fullPath); err != nil {
 		return err
+	}
+	defer f.Close()
+
+	if st, err = f.Stat(); err != nil {
+		return
+	}
+
+	if hdr, err = tar.FileInfoHeader(st, tarPath); err != nil {
+		return
 	}
 	hdr.Name = tarPath
 
 	if err = tw.WriteHeader(hdr); err != nil {
-		return xerrors.Errorf("writing header for %s: %w", tarPath, err)
+		return
 	}
 
-	f, err := os.Open(fullPath)
-	if err != nil {
-		return err
-	}
 	_, err = io.Copy(tw, f)
-	f.Close()
-
-	return err
+	return
 }
 
 func Unzip(rt io.ReaderAt, dst string, filter func(path string, f *zip.File) bool) (err error) {
