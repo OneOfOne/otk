@@ -87,6 +87,6 @@ func AESDecrypt(b64Data, sep, passphrase string, keySize uint8) (parts []string,
 		return
 	}
 
-	parts = strings.Split(string(plain), sep)
+	parts = strings.Split(UnsafeString(plain), sep)
 	return
 }

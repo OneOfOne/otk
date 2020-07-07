@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"io"
 	"sync"
-	"unsafe"
 
 	"golang.org/x/xerrors"
 )
@@ -93,5 +92,5 @@ func (b *Buffer) ReadAt(p []byte, off int64) (n int, err error) {
 
 // UnsafeString returns the accumulated string, unsafely without a copy.
 func (b *Buffer) UnsafeString() string {
-	return *(*string)(unsafe.Pointer(&b.ref))
+	return UnsafeString(b.Bytes())
 }
