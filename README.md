@@ -2,4 +2,6 @@
 
 OneOfOne's Tool Kit (random helper functions and utils).
 
-Clone of an old repo that no longer exists and will slowly be moved her
+A clone of an old repo that no longer exists and will slowly be moved here.
+
+License: Apache 2.0
