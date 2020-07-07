@@ -3,6 +3,8 @@ package otk
 import (
 	"bytes"
 	"io"
+	"sync"
+	"unsafe"
 
 	"golang.org/x/xerrors"
 )
@@ -12,6 +14,25 @@ var (
 
 	ErrOffsetOOB = xerrors.New("offset out of bounds")
 )
+
+type BufferPool struct {
+	p sync.Pool
+	o sync.Once
+}
+
+func (bp *BufferPool) Get() *Buffer {
+	bp.o.Do(func() {
+		bp.p.New = func() interface{} {
+			return new(Buffer)
+		}
+	})
+	return bp.p.Get().(*Buffer)
+}
+
+func (bp *BufferPool) Put(b *Buffer) {
+	b.Reset()
+	bp.p.Put(b)
+}
 
 func NewBuffer(buf []byte) *Buffer {
 	var b Buffer
@@ -68,4 +89,9 @@ func (b *Buffer) ReadAt(p []byte, off int64) (n int, err error) {
 	}
 	n = copy(p, b.ref[off:])
 	return
+}
+
+// UnsafeString returns the accumulated string, unsafely without a copy.
+func (b *Buffer) UnsafeString() string {
+	return *(*string)(unsafe.Pointer(&b.ref))
 }
