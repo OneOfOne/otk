@@ -2,6 +2,9 @@ package otk
 
 import (
 	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 
 	"golang.org/x/xerrors"
 )
@@ -102,3 +105,24 @@ type nopCloser struct {
 func (nopCloser) Close() error { return nil }
 
 func NopWriteCloser(w io.Writer) io.WriteCloser { return nopCloser{w} }
+
+func CopyOnWriteFile(fp string, fn func(w io.Writer) error) (err error) {
+	var f *os.File
+	if f, err = ioutil.TempFile(filepath.Dir(fp), "CoW"); err != nil {
+		return
+	}
+	defer os.Remove(f.Name()) // clean our trash if we errored out
+
+	// might look ugly but want it to be as error-proof as humanily possible
+	if err = fn(f); err != nil {
+		f.Close()
+		return err
+	}
+
+	if err = f.Close(); err != nil {
+		return
+	}
+
+	return os.Rename(f.Name(), fp)
+
+}
