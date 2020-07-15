@@ -125,3 +125,23 @@ func TimeUntil(t time.Time, hour, min, sec int, nextDay bool) time.Duration {
 
 	return nt.Sub(t)
 }
+
+// ModNextDay returns the next duration until X days since start.
+// for example:
+// - ModNextDay(2020-06-13, 2020-07-14, 15) => 14 days (2020-07-28)
+// - ModNextDay(2020-06-29, 2020-07-14, 15) => 0
+// - ModNextDay(2020-07-14, 2020-07-14, 15) => 0
+// - ModNextDay(2020-07-15, 2020-07-14, 15) => 1 day (2020-07-15)
+func ModNextDay(start, now time.Time, days int) time.Duration {
+	if start.After(now) || start.Equal(now) {
+		return start.Sub(now)
+	}
+
+	d := int(now.Sub(start).Hours() / 24)
+	if d == 0 {
+		return 0
+	}
+
+	d = d + days - (d % days)
+	return start.Add(time.Hour * 24 * time.Duration(d)).Sub(now)
+}
