@@ -11,13 +11,15 @@ func TestScheduler(t *testing.T) {
 	defer sch.StopAll()
 
 	count := 0
-	sch.Start("1 sec", func(ctx context.Context, now time.Time) error {
+	sch.Start("w00t", func(ctx context.Context, now time.Time) error {
 		count++
 		return nil
 	}, time.Millisecond, time.Millisecond)
 
-	time.Sleep(time.Second / 2)
-	if count != 499 {
-		t.Fatalf("expected 499, got %d", count)
+	time.Sleep(time.Second / 4)
+	sch.Stop("w00t")
+	time.Sleep(time.Second / 4)
+	if count < 249 || count > 250 {
+		t.Fatalf("expected 249-250, got %d", count)
 	}
 }
