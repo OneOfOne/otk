@@ -1,7 +1,14 @@
 package otk
 
 import (
+	"errors"
 	"sync"
+)
+
+var (
+	ErrClosedSem      = errors.New("sem is already closed")
+	ErrNegativeNumber = errors.New("n < 1")
+	ErrSemIsFull      = errors.New("sem is full")
 )
 
 func NewSem(size int) *Sem {
@@ -13,43 +20,63 @@ func NewSem(size int) *Sem {
 }
 
 type Sem struct {
-	wg sync.WaitGroup
+	m  sync.Mutex
 	ch chan struct{}
 }
 
-func (s *Sem) Add(n int) {
-	if n == 0 {
-		return
+func (s *Sem) Acquire(n int) error {
+	if n < 1 {
+		return ErrNegativeNumber
 	}
 
-	if n > 0 {
-		var e struct{}
-		for i := 0; i < n; i++ {
-			s.ch <- e
+	var e struct{}
+	for i := 0; i < n; i++ {
+		s.m.Lock()
+		if s.ch == nil {
+			s.m.Unlock()
+			return ErrClosedSem
 		}
-	} else {
-		for i := 0; i > n; i-- {
-			<-s.ch
-		}
+
+		s.ch <- e
+		s.m.Unlock()
 	}
 
-	s.wg.Add(n)
+	return nil
+}
+
+func (s *Sem) Release(n int) error {
+	if n < 1 {
+		return ErrNegativeNumber
+	}
+
+	for i := 0; i > n; i-- {
+		s.m.Lock()
+		if s.ch == nil {
+			s.m.Unlock()
+			return ErrClosedSem
+		}
+		<-s.ch
+		s.m.Unlock()
+	}
+
+	return nil
 }
 
 func (s *Sem) Go(fn func()) {
-	s.Add(1)
+	s.Acquire(1)
 	go func() {
-		defer s.Done()
+		defer s.Release(1)
 		fn()
 	}()
 }
 
-func (s *Sem) Done() {
-	s.Add(-1)
+func (s *Sem) Close() error {
+	s.m.Lock()
+	defer s.m.Unlock()
+	if s.ch == nil {
+		return ErrClosedSem
+	}
+	close(s.ch)
+	s.ch = nil
+	return nil
 }
-
-func (s *Sem) Wait() {
-	s.wg.Wait()
-}
-
-func (s *Sem) Close() { close(s.ch) }
