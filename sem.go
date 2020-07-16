@@ -36,7 +36,7 @@ func (s *Sem) Add(n int) {
 	s.wg.Add(n)
 }
 
-func (s *Sem) Run(fn func()) {
+func (s *Sem) Go(fn func()) {
 	s.Add(1)
 	go func() {
 		defer s.Done()
