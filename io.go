@@ -124,5 +124,4 @@ func CopyOnWriteFile(fp string, fn func(w io.Writer) error) (err error) {
 	}
 
 	return os.Rename(f.Name(), fp)
-
 }

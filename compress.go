@@ -26,7 +26,7 @@ func TarFolder(folder, fp string, topts *TarOptions) (err error) {
 		topts = &TarOptions{}
 	}
 
-	if err = os.MkdirAll(filepath.Dir(fp), 0755); err != nil {
+	if err = os.MkdirAll(filepath.Dir(fp), 0o755); err != nil {
 		return
 	}
 

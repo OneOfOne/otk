@@ -11,10 +11,8 @@ import (
 
 type TaskFunc = func(ctx context.Context, t time.Time) error
 
-var (
-	// ErrStopTask can be returned to stop the run loop
-	ErrStopTask = errors.New("STOP")
-)
+// ErrStopTask can be returned to stop the run loop
+var ErrStopTask = errors.New("STOP")
 
 func NewScheduler(pctx context.Context) *Scheduler {
 	ctx, cfn := context.WithCancel(pctx)
@@ -71,7 +69,6 @@ func (c *Scheduler) Stop(id string) error {
 	t.stop()
 	delete(c.tasks, id)
 	return nil
-
 }
 
 func (c *Scheduler) StopAll() {

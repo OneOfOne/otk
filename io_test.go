@@ -28,7 +28,6 @@ func TestTar(t *testing.T) {
 			return path != ".git"
 		},
 	})
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,5 +40,4 @@ func TestTar(t *testing.T) {
 	if !bytes.Contains(out, []byte("io_test.go")) || bytes.Contains(out, []byte(".git")) {
 		t.Fatalf("unexpected tar output: %s", out)
 	}
-
 }
