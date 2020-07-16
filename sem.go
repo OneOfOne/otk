@@ -62,12 +62,16 @@ func (s *Sem) Release(n int) error {
 	return nil
 }
 
-func (s *Sem) Go(fn func()) {
-	s.Acquire(1)
+func (s *Sem) Go(fn func()) error {
+	if err := s.Acquire(1); err != nil {
+		return err
+	}
 	go func() {
 		defer s.Release(1)
 		fn()
 	}()
+
+	return nil
 }
 
 func (s *Sem) Close() error {
