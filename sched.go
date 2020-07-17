@@ -40,6 +40,10 @@ func (c *Scheduler) Start(id string, fn TaskFunc, startIn, thenEvery time.Durati
 		return xerrors.Errorf("task %q already exists", id)
 	}
 
+	if startIn < 0 {
+		startIn = time.Second
+	}
+
 	ctx, cfn := context.WithCancel(c.ctx)
 	tsk := &task{
 		ctx:   ctx,
