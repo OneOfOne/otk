@@ -40,7 +40,7 @@ func (c *Scheduler) Start(id string, fn TaskFunc, startIn, thenEvery time.Durati
 		return xerrors.Errorf("task %q already exists", id)
 	}
 
-	if startIn < 0 {
+	if startIn < 1 {
 		startIn = time.Second
 	}
 
@@ -94,14 +94,14 @@ func (t *task) run() {
 	for {
 		select {
 		case now := <-t.tk.C:
-			if t.fn(t.ctx, now) == ErrStopTask {
-				return
-			}
-
 			if !hitFirst {
 				hitFirst = true
 				t.tk.Stop()
 				t.tk = time.NewTicker(t.every)
+			}
+
+			if t.fn(t.ctx, now) == ErrStopTask {
+				return
 			}
 
 		case <-t.ctx.Done():
