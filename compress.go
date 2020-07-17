@@ -117,7 +117,7 @@ func AppendToTar(tw *tar.Writer, fullPath, tarPath string) (err error) {
 		return
 	}
 
-	_, err = io.Copy(tw, f)
+	_, err = io.Copy(tw, io.LimitReader(f, st.Size()))
 	return
 }
 
