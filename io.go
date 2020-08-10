@@ -1,6 +1,7 @@
 package otk
 
 import (
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"os"
@@ -124,4 +125,49 @@ func CopyOnWriteFile(fp string, fn func(w io.Writer) error) (err error) {
 	}
 
 	return os.Rename(f.Name(), fp)
+}
+
+type (
+	FileDecoder interface {
+		Decode(interface{}) error
+	}
+	FileEncoder interface {
+		Encode(interface{}) error
+	}
+)
+
+func ReadFileWithDecoder(fp string, dec func(r io.Reader) FileDecoder, out interface{}) error {
+	f, err := os.Open(fp)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	return dec(f).Decode(out)
+}
+
+func WriteFileWithEncoder(fp string, enc func(w io.Writer) FileEncoder, in interface{}) error {
+	f, err := os.Create(fp)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	return enc(f).Encode(in)
+}
+
+func ReadJSONFile(fp string, out interface{}) error {
+	return ReadFileWithDecoder(fp, func(r io.Reader) FileDecoder {
+		return json.NewDecoder(r)
+	}, out)
+}
+
+func WriteJSONFile(fp string, in interface{}, indent bool) error {
+	return WriteFileWithEncoder(fp, func(w io.Writer) FileEncoder {
+		enc := json.NewEncoder(w)
+		if indent {
+			enc.SetIndent("", "\t")
+		}
+		return enc
+	}, in)
 }
