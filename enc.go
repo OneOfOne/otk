@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"io"
 	"strings"
 )
@@ -89,4 +90,13 @@ func AESDecrypt(b64Data, sep, passphrase string, keySize uint8) (parts []string,
 
 	parts = strings.Split(UnsafeString(plain), sep)
 	return
+}
+
+func RandomString(sz int) (string, error) {
+	b := make([]byte, sz/2)
+	if _, err := io.ReadFull(rand.Reader, b); err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(b), nil
 }

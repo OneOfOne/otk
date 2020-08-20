@@ -8,6 +8,8 @@ import (
 	"unsafe"
 )
 
+var _ rand.Source = (*XorShiftRNG)(nil)
+
 // XorShiftRNG simple efficient thread-safe lock-free rng, self seeds with time.Now().UnixNano() if 0
 type XorShiftRNG uint64
 
@@ -46,5 +48,3 @@ func (x *XorShiftRNG) Bytes() [8]byte {
 	n := x.Uint64()
 	return *(*[8]byte)(unsafe.Pointer(&n))
 }
-
-var _ rand.Source = (*XorShiftRNG)(nil)
