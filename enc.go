@@ -93,10 +93,10 @@ func AESDecrypt(b64Data, sep, passphrase string, keySize uint8) (parts []string,
 }
 
 func RandomString(sz int) (string, error) {
-	b := make([]byte, sz/2)
+	b := make([]byte, 1+(sz/2))
 	if _, err := io.ReadFull(rand.Reader, b); err != nil {
 		return "", err
 	}
 
-	return hex.EncodeToString(b), nil
+	return hex.EncodeToString(b)[:sz], nil
 }
