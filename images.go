@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"golang.org/x/xerrors"
@@ -50,10 +51,10 @@ func ImageFromDataURL(dataURL string, fn func(ext string) (io.WriteCloser, error
 // SaveImageFromDataURL expects output name without the extension
 // returns full path
 func SaveImageFromDataURL(dataURL, output string) (fp string, err error) {
+	os.MkdirAll(filepath.Dir(output), 0755)
 	err = ImageFromDataURL(dataURL, func(ext string) (io.WriteCloser, error) {
 		fp = output + "." + ext
 		return os.Create(fp)
 	})
-
 	return
 }
