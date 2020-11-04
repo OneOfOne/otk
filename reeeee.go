@@ -57,6 +57,9 @@ func ReplaceAllStringSubmatchFunc(re *regexp.Regexp, src string, repl func([]str
 		for i := 2; i < len(match); i += 2 {
 			start := match[i]
 			end := match[i+1]
+			if start < 0 || end < 0 {
+				continue
+			}
 			groups = append(groups, src[start:end])
 			groupIndices = append(groupIndices, [2]int{start, end})
 		}
