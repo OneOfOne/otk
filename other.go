@@ -55,3 +55,25 @@ func TryParseTime(ts string, layouts []string, tz *time.Location) time.Time {
 	}
 	return time.Time{}
 }
+
+type M = map[string]interface{}
+
+func MergeMap(dst, src M) M {
+	if dst == nil {
+		return src
+	}
+	for k, v := range src {
+		if v, ok := v.(M); ok {
+			if dv, ok := dst[k].(M); ok {
+				MergeMap(dv, v)
+				continue
+			}
+		}
+		if v == nil {
+			delete(dst, k)
+		} else {
+			dst[k] = v
+		}
+	}
+	return dst
+}
