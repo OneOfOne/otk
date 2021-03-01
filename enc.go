@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"strings"
 )
@@ -84,6 +85,12 @@ func AESDecrypt(b64Data, sep, passphrase string, keySize uint8) (parts []string,
 	}
 
 	nsz := gcm.NonceSize()
+
+	if len(data) <= nsz {
+		err = fmt.Errorf("invalid input data (decoded len: %d): %s", len(data), b64Data)
+		return
+	}
+
 	if plain, err = gcm.Open(nil, data[:nsz], data[nsz:], nil); err != nil {
 		return
 	}
