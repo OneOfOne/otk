@@ -171,3 +171,34 @@ func WriteJSONFile(fp string, in interface{}, indent bool) error {
 		return enc
 	}, in)
 }
+
+type CachedReader struct {
+	R      io.Reader
+	rewind bool
+	tmp    []byte
+}
+
+func (cr *CachedReader) Read(p []byte) (int, error) {
+	if !cr.rewind {
+		if cr.tmp == nil {
+			cr.tmp = make([]byte, 0, len(p))
+		}
+		n, err := cr.R.Read(p)
+		cr.tmp = append(cr.tmp, p[:n]...)
+		return n, err
+	}
+
+	if len(cr.tmp) > 0 {
+		n := copy(p, cr.tmp)
+		if cr.tmp = cr.tmp[n:]; len(cr.tmp) == 0 {
+			cr.tmp = nil
+		}
+		return n, nil
+	}
+
+	return cr.R.Read(p)
+}
+
+func (cr *CachedReader) Rewind() {
+	cr.rewind = true
+}

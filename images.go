@@ -2,15 +2,22 @@ package otk
 
 import (
 	"encoding/base64"
+	"image"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"golang.org/x/xerrors"
+
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
+
+	_ "golang.org/x/image/webp"
 )
 
-var ErrInvalidImageDataURL = xerrors.New("invalid dataURL, must be in format `data:image/{png,jpeg,jpg,gif};base64,`")
+var ErrInvalidImageDataURL = xerrors.New("invalid dataURL, must be in format `data:image/{png,jpeg,jpg,gif,webp};base64,`")
 
 func ImageFromDataURL(dataURL string, fn func(ext string) (io.WriteCloser, error)) error {
 	const (
@@ -24,7 +31,7 @@ func ImageFromDataURL(dataURL string, fn func(ext string) (io.WriteCloser, error
 
 	ext := dataURL[len(imgHeaderBase) : len(imgHeaderBase)+4]
 	switch ext {
-	case "png;", "gif;":
+	case "png;", "gif;", "webp;":
 		ext = ext[:3]
 	case "jpg;", "jpeg":
 		ext = "jpg"
@@ -56,5 +63,14 @@ func SaveImageFromDataURL(dataURL, output string) (fp string, err error) {
 		fp = output + "." + ext
 		return os.Create(fp)
 	})
+	return
+}
+
+// DecodeImageConfig accepts a reader and returns a CachedReader and the results of image.DecodeConfig
+func DecodeImageConfig(rd io.Reader) (safeReader io.Reader, cfg image.Config, format string, err error) {
+	cr := &CachedReader{R: rd}
+	cfg, format, err = image.DecodeConfig(cr)
+	cr.Rewind()
+	safeReader = cr
 	return
 }
