@@ -34,6 +34,8 @@ func AESEncrypt(parts []string, sep string, passphrase string, keySize uint8) (_
 		buf   = encBP.Get()
 	)
 
+	defer encBP.Put(buf)
+
 	if block, err = aes.NewCipher(hash(passphrase, keySize)); err != nil {
 		return
 	}
@@ -60,7 +62,6 @@ func AESEncrypt(parts []string, sep string, passphrase string, keySize uint8) (_
 	}
 
 	enc := gcm.Seal(nonce, nonce, buf.Bytes(), nil)
-	encBP.Put(buf)
 	return base64.RawURLEncoding.EncodeToString(enc), nil
 }
 
