@@ -31,6 +31,14 @@ func (s *Set) Set(keys ...string) {
 	}
 }
 
+func (s *Set) Merge(o Set) {
+	var e struct{}
+	sm := s.init()
+	for k := range o {
+		sm[k] = e
+	}
+}
+
 func (s Set) Delete(keys ...string) {
 	for _, k := range keys {
 		delete(s, k)
@@ -97,6 +105,20 @@ type SafeSet struct {
 func (ss *SafeSet) Set(keys ...string) {
 	ss.mux.Lock()
 	ss.s.Set(keys...)
+	ss.mux.Unlock()
+}
+
+func (ss *SafeSet) MergeSafe(o *SafeSet) {
+	ss.mux.Lock()
+	o.mux.Lock()
+	ss.s.Merge(o.s)
+	o.mux.Unlock()
+	ss.mux.Unlock()
+}
+
+func (ss *SafeSet) Merge(o Set) {
+	ss.mux.Lock()
+	ss.s.Merge(o)
 	ss.mux.Unlock()
 }
 
