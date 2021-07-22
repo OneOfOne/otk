@@ -83,7 +83,6 @@ func (w *Workers) init(n int) {
 					return
 				case w.ch <- nil:
 				}
-				w.ch <- nil
 			}
 			atomic.AddInt64(&w.total, -int64(w.inc))
 		case <-w.ctx.Done():
@@ -100,7 +99,6 @@ func (w *Workers) spawn(n int) {
 }
 
 func (w *Workers) worker() {
-	done := w.ctx.Done()
 	for {
 		select {
 		case fn := <-w.ch:
@@ -108,7 +106,7 @@ func (w *Workers) worker() {
 				return
 			}
 			fn(w.ctx)
-		case <-done:
+		case <-w.ctx.Done():
 			return
 		}
 	}
