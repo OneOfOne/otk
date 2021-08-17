@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/OneOfOne/otk"
+	"go.oneofone.dev/otk"
 )
 
 func TestTar(t *testing.T) {
