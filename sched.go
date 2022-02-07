@@ -83,9 +83,8 @@ type task struct {
 	ctx   context.Context
 	cfn   context.CancelFunc
 	tk    *time.Ticker
+	fn    TaskFunc
 	every time.Duration
-
-	fn TaskFunc
 }
 
 func (t *task) run() {

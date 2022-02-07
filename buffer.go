@@ -15,8 +15,8 @@ var (
 )
 
 type BufferPool struct {
-	p sync.Pool
 	o sync.Once
+	p sync.Pool
 }
 
 func (bp *BufferPool) Get() *Buffer {

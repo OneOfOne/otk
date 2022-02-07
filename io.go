@@ -174,8 +174,8 @@ func WriteJSONFile(fp string, in interface{}, indent bool) error {
 
 type CachedReader struct {
 	R      io.Reader
-	rewind bool
 	tmp    []byte
+	rewind bool
 }
 
 func (cr *CachedReader) Read(p []byte) (int, error) {

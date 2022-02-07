@@ -13,9 +13,9 @@ import (
 )
 
 type TarOptions struct {
-	BufSize       int                                    // buffer size, default size is 2 MiB
-	CompressFn    func(w io.Writer) io.WriteCloser       // returns a compressor, ex gzip.NewWriter
-	FilterFn      func(path string, fi os.FileInfo) bool // return false to ignore files
+	CompressFn    func(w io.Writer) io.WriteCloser
+	FilterFn      func(path string, fi os.FileInfo) bool
+	BufSize       int
 	DeleteOnError bool
 }
 

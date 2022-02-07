@@ -14,9 +14,9 @@ import (
 )
 
 type HTTPClient struct {
-	http.Client
 	DefaultHeaders http.Header
 	DefaultQuery   url.Values
+	http.Client
 }
 
 func (c *HTTPClient) AllowInsecureTLS(v bool) (old bool) {

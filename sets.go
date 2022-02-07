@@ -1,8 +1,6 @@
 package otk
 
-import (
-	"go.oneofone.dev/sets"
-)
+import "go.oneofone.dev/otk/sets"
 
 type (
 	Set      = sets.Set
@@ -16,4 +14,8 @@ func NewSet(keys ...string) Set {
 
 func NewSafeSet(keys ...string) *SafeSet {
 	return sets.SafeSetOf(keys...)
+}
+
+func NewMultiSet() MultiSet {
+	return sets.MultiSet{}
 }
