@@ -1,10 +1,10 @@
 package otk_test
 
 import (
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,7 +17,7 @@ import (
 func TestTar(t *testing.T) {
 	_, thisFile, _, _ := runtime.Caller((0))
 	basePath := filepath.Dir(thisFile)
-	tmp, _ := ioutil.TempFile("", "")
+	tmp, _ := os.CreateTemp("", "")
 	tmp.Close()
 	defer os.Remove(tmp.Name())
 
@@ -39,5 +39,31 @@ func TestTar(t *testing.T) {
 
 	if !bytes.Contains(out, []byte("io_test.go")) || bytes.Contains(out, []byte(".git")) {
 		t.Fatalf("unexpected tar output: %s", out)
+	}
+}
+
+func TestCoW(t *testing.T) {
+	tmp, _ := os.CreateTemp("", "")
+	tmp.Close()
+	defer os.Remove(tmp.Name())
+
+	if err := otk.CopyOnWriteFilePerms(tmp.Name(), func(bw *bufio.Writer) error {
+		_, err := bw.WriteString("test")
+		return err
+	}, 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if b, _ := os.ReadFile(tmp.Name()); string(b) != "test" {
+		t.Fatalf("expected `test`, got %q", b)
+	}
+
+	fi, err := os.Stat(tmp.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if m := fi.Mode(); m != 0645 {
+		t.Fatalf("expected 0644, got 0%o", m)
 	}
 }

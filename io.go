@@ -1,11 +1,12 @@
 package otk
 
 import (
+	"bufio"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"golang.org/x/xerrors"
 )
@@ -108,16 +109,44 @@ func (nopCloser) Close() error { return nil }
 func NopWriteCloser(w io.Writer) io.WriteCloser { return nopCloser{w} }
 
 func CopyOnWriteFile(fp string, fn func(w io.Writer) error) (err error) {
+	return CopyOnWriteFilePerms(fp, func(w *bufio.Writer) error { return fn(w) }, 0644)
+}
+
+var bufWriterPool = sync.Pool{
+	New: func() interface{} {
+		return bufio.NewWriterSize(nil, 32768)
+	},
+}
+
+func CopyOnWriteFilePerms(fp string, fn func(bw *bufio.Writer) error, mode os.FileMode) (err error) {
 	var f *os.File
-	if f, err = ioutil.TempFile(filepath.Dir(fp), "CoW"); err != nil {
+	dir, fname := filepath.Split(fp)
+	if f, err = os.CreateTemp(dir, fname); err != nil {
 		return
 	}
-	defer os.Remove(f.Name()) // clean our trash if we errored out
 
-	// might look ugly but want it to be as error-proof as humanily possible
-	if err = fn(f); err != nil {
+	bw := bufWriterPool.Get().(*bufio.Writer)
+	bw.Reset(f)
+
+	defer func() {
+		bw.Reset(nil)
+		bufWriterPool.Put(bw)
+		os.Remove(f.Name()) // clean our trash if we errored out
+	}()
+
+	if err = fn(bw); err != nil {
 		f.Close()
-		return err
+		return
+	}
+
+	if err = bw.Flush(); err != nil {
+		f.Close()
+		return
+	}
+
+	if err = f.Chmod(mode); err != nil {
+		f.Close()
+		return
 	}
 
 	if err = f.Close(); err != nil {
