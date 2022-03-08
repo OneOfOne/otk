@@ -46,8 +46,27 @@ func (c *HTTPClient) AllowInsecureTLS(v bool) (old bool) {
 //	to read the body directly, `func(*http.Response) error` to process the actual response,
 //	or a pointer to an object to decode a JSON body into.
 func (c *HTTPClient) RequestCtx(ctx context.Context, method, contentType, uri string, reqData, respData interface{}) (err error) {
-	var r io.Reader
+	var h http.Header
+	if contentType != "" {
+		h = http.Header{}
+		h.Set("Content-Type", contentType)
+	}
+	return c.RequestHeadersCtx(ctx, method, uri, h, reqData, respData)
+}
 
+// RequestHeaderCtx is a smart wrapper to handle http requests.
+// - ctx: is a context.Context in case you want more control over canceling the request.
+// - method: http method (GET, PUT, POST, etc..), if empty it defaults to GET.
+// - url: the request's url.
+// - header: headers to pass to the request, ex User-Agent.
+// - reqData: data to pass to POST/PUT requests, if it's an `io.Reader`, a `[]byte` or a `string`, it will be passed as-is,
+//	`url.Values` will be encoded as "application/x-www-form-urlencoded", any other object will be encoded as JSON.
+// - respData: data object to get the response or `nil`, can be , `io.Writer`, `func(io.Reader) error`
+//	to read the body directly, `func(*http.Response) error` to process the actual response,
+//	or a pointer to an object to decode a JSON body into.
+func (c *HTTPClient) RequestHeadersCtx(ctx context.Context, method, uri string, header http.Header, reqData, respData interface{}) (err error) {
+	var r io.Reader
+	contentType := ""
 	switch in := reqData.(type) {
 	case nil:
 
@@ -62,7 +81,7 @@ func (c *HTTPClient) RequestCtx(ctx context.Context, method, contentType, uri st
 
 	case url.Values:
 		r = strings.NewReader(in.Encode())
-		if contentType == "" {
+		if header.Get("Content-Type") == "" {
 			contentType = "application/x-www-form-urlencoded"
 		}
 
@@ -72,7 +91,7 @@ func (c *HTTPClient) RequestCtx(ctx context.Context, method, contentType, uri st
 			return err
 		}
 		r = &buf
-		if contentType == "" {
+		if header.Get("Content-Type") == "" {
 			contentType = "application/json"
 		}
 	}
@@ -82,8 +101,12 @@ func (c *HTTPClient) RequestCtx(ctx context.Context, method, contentType, uri st
 		return err
 	}
 
+	if header != nil {
+		req.Header = header
+	}
+
 	if contentType != "" {
-		req.Header.Add("Content-Type", contentType)
+		req.Header.Set("Content-Type", contentType)
 	}
 
 	resp, err := c.Do(req)
@@ -140,6 +163,10 @@ func (c *HTTPClient) Request(method, ct, url string, reqData, respData interface
 }
 
 var DefaultClient HTTPClient
+
+func RequestHeadersCtx(ctx context.Context, method, url string, header http.Header, reqData, respData interface{}) error {
+	return DefaultClient.RequestHeadersCtx(ctx, method, url, header, reqData, respData)
+}
 
 func RequestCtx(ctx context.Context, method, ct, url string, reqData, respData interface{}) error {
 	return DefaultClient.RequestCtx(ctx, method, ct, url, reqData, respData)
