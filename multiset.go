@@ -6,6 +6,10 @@ import (
 	"unsafe"
 )
 
+type (
+	StringMultiSet = MultiSet[string, string]
+)
+
 type MultiSet[T1, T2 comparable] map[T1]Set[T2]
 
 func (s MultiSet[T1, T2]) init() MultiSet[T1, T2] {

@@ -5,6 +5,14 @@ import (
 	"sync"
 )
 
+type (
+	StringSafeSet = SafeSet[string]
+	IntSafeSet    = SafeSet[int]
+	Int64SafeSet  = SafeSet[int64]
+	UintSafeSet   = SafeSet[uint]
+	Uint64SafeSet = SafeSet[uint64]
+)
+
 func SafeSetOf[T comparable](keys ...T) *SafeSet[T] {
 	s := SetOf(keys...)
 	return &SafeSet[T]{s: s}

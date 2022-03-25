@@ -6,6 +6,14 @@ import (
 	"unsafe"
 )
 
+type (
+	StringSet = Set[string]
+	IntSet    = Set[int]
+	Int64Set  = Set[int64]
+	UintSet   = Set[uint]
+	Uint64Set = Set[uint64]
+)
+
 var empty struct{}
 
 func SetOf[T comparable](keys ...T) Set[T] {
