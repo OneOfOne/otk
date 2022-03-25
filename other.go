@@ -6,17 +6,8 @@ import (
 )
 
 // UniqueSlice returns all unique keys in `in` by modifying it in place
-func UniqueSlice(in []string) (out []string) {
-	set := make(Set, len(in))
-	out = in[:0]
-
-	for _, s := range in {
-		if set.AddIfNotExists(s) {
-			out = append(out, s)
-		}
-	}
-
-	return
+func UniqueSlice[S ~[]E, E comparable](in S, inplace bool) (out S) {
+	return SetOf(in...).Keys()
 }
 
 // TryParseTime will try to parse input in all provided go time formats.

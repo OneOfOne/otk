@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"testing"
 
-	"go.oneofone.dev/otk"
+	"go.oneofone.dev/otk/v2"
 )
 
 func TestTar(t *testing.T) {
@@ -50,7 +50,7 @@ func TestCoW(t *testing.T) {
 	if err := otk.CopyOnWriteFilePerms(tmp.Name(), func(bw *bufio.Writer) error {
 		_, err := bw.WriteString("test")
 		return err
-	}, 0644); err != nil {
+	}, 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -63,7 +63,7 @@ func TestCoW(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if m := fi.Mode(); m != 0645 {
+	if m := fi.Mode(); m != 0o644 {
 		t.Fatalf("expected 0644, got 0%o", m)
 	}
 }
