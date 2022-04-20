@@ -22,7 +22,7 @@ func (ss *SafeSet) Set(keys ...string) *SafeSet {
 
 func (ss *SafeSet) Add(keys ...string) *SafeSet {
 	ss.mux.Lock()
-	ss.s.Add(keys...)
+	ss.s.Set(keys...)
 	ss.mux.Unlock()
 	return ss
 }
