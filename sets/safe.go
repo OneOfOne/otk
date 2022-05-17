@@ -21,7 +21,7 @@ func (ss *SafeSet[T]) Set(keys ...T) *SafeSet[T] {
 
 func (ss *SafeSet[T]) Add(keys ...T) *SafeSet[T] {
 	ss.mux.Lock()
-	ss.s.Add(keys...)
+	ss.s.Set(keys...)
 	ss.mux.Unlock()
 	return ss
 }
