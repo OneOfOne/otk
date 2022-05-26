@@ -4,22 +4,20 @@ import (
 	"unicode"
 )
 
-func KeywordsToSearch(search string) (kws map[string]Set, rest Set) {
-	MakeKeywords(search, ':', func(kw, val string) {
-		if kw == "" {
-			rest = rest.Add(val)
-		} else {
-			if kws == nil {
-				kws = map[string]Set{}
-			}
-			kws[kw] = kws[kw].Add(val)
-		}
-	})
-
-	return
+type KeyVal struct {
+	Key string
+	Val string
 }
 
-func MakeKeywords(s string, sepChar rune, fn func(kw, val string)) {
+func KeywordsToSearch(search string) (out []KeyVal) {
+	FindKeywords(search, ':', func(kw, val string) {
+		out = append(out, KeyVal{Key: kw, Val: val})
+	})
+
+	return out[:len(out):len(out)]
+}
+
+func FindKeywords(s string, sepChar rune, fn func(kw, val string)) {
 	wordStart, sepStart := -1, -1
 	inQuote := false
 
