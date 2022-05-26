@@ -1,7 +1,6 @@
 package otk
 
 import (
-	"reflect"
 	"unsafe"
 )
 
@@ -10,9 +9,12 @@ func UnsafeString(p []byte) string {
 	return *(*string)(unsafe.Pointer(&p))
 }
 
+type stringCap struct {
+	string
+	int
+}
+
+// UnsafeBytes can spawn even bigger dragons, summon wisely
 func UnsafeBytes(s string) (out []byte) {
-	ss := (*reflect.StringHeader)(unsafe.Pointer(&s))
-	bs := (*reflect.SliceHeader)(unsafe.Pointer(&out))
-	bs.Data, bs.Len, bs.Cap = ss.Data, ss.Len, ss.Len
-	return
+	return *(*[]byte)(unsafe.Pointer(&stringCap{s, len(s)}))
 }
