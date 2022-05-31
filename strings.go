@@ -27,6 +27,8 @@ func FindKeywords(s string, sepChar rune, fn func(kw, val string)) {
 		}
 		if sepStart == -1 {
 			fn("", s[wordStart:i])
+		} else if sepStart == len(s)-1 {
+			fn("", s[wordStart:])
 		} else {
 			kw := s[wordStart:sepStart]
 			if s[sepStart+1] == '"' {
