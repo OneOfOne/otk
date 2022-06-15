@@ -3,6 +3,7 @@ package otk
 import (
 	"bufio"
 	"encoding/json"
+	"hash"
 	"io"
 	"os"
 	"path/filepath"
@@ -10,6 +11,12 @@ import (
 
 	"golang.org/x/xerrors"
 )
+
+var bufWriterPool = sync.Pool{
+	New: func() interface{} {
+		return bufio.NewWriterSize(nil, 32768)
+	},
+}
 
 // PipeRd is an io.Pipe helper, returns a io.ReadCloser
 func PipeRd(writeFn func(io.Writer) error) io.ReadCloser {
@@ -109,16 +116,15 @@ func (nopCloser) Close() error { return nil }
 func NopWriteCloser(w io.Writer) io.WriteCloser { return nopCloser{w} }
 
 func CopyOnWriteFile(fp string, fn func(w io.Writer) error) (err error) {
-	return CopyOnWriteFilePerms(fp, func(w *bufio.Writer) error { return fn(w) }, 0644)
-}
-
-var bufWriterPool = sync.Pool{
-	New: func() interface{} {
-		return bufio.NewWriterSize(nil, 32768)
-	},
+	return CopyOnWriteFilePerms(fp, func(w *bufio.Writer) error { return fn(w) }, 0o644)
 }
 
 func CopyOnWriteFilePerms(fp string, fn func(bw *bufio.Writer) error, mode os.FileMode) (err error) {
+	_, err = CopyOnWriteFileHash(fp, fn, nil, mode)
+	return
+}
+
+func CopyOnWriteFileHash(fp string, fn func(bw *bufio.Writer) error, h hash.Hash, mode os.FileMode) (sum []byte, err error) {
 	var f *os.File
 	dir, fname := filepath.Split(fp)
 	if f, err = os.CreateTemp(dir, fname); err != nil {
@@ -126,7 +132,11 @@ func CopyOnWriteFilePerms(fp string, fn func(bw *bufio.Writer) error, mode os.Fi
 	}
 
 	bw := bufWriterPool.Get().(*bufio.Writer)
-	bw.Reset(f)
+	if h != nil {
+		bw.Reset(io.MultiWriter(f, h))
+	} else {
+		bw.Reset(f)
+	}
 
 	defer func() {
 		bw.Reset(nil)
@@ -153,7 +163,13 @@ func CopyOnWriteFilePerms(fp string, fn func(bw *bufio.Writer) error, mode os.Fi
 		return
 	}
 
-	return os.Rename(f.Name(), fp)
+	if err = os.Rename(f.Name(), fp); err != nil {
+		return
+	}
+	if h != nil {
+		sum = h.Sum(nil)
+	}
+	return
 }
 
 type (
