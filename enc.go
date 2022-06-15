@@ -14,7 +14,7 @@ import (
 
 var encBP BufferPool
 
-func hash(key string, keySize uint8) []byte {
+func hashKey(key string, keySize uint8) []byte {
 	switch keySize {
 	case 16, 24, 32:
 	default:
@@ -36,7 +36,7 @@ func AESEncrypt(parts []string, sep string, passphrase string, keySize uint8) (_
 
 	defer encBP.Put(buf)
 
-	if block, err = aes.NewCipher(hash(passphrase, keySize)); err != nil {
+	if block, err = aes.NewCipher(hashKey(passphrase, keySize)); err != nil {
 		return
 	}
 	if gcm, err = cipher.NewGCM(block); err != nil {
@@ -77,7 +77,7 @@ func AESDecrypt(b64Data, sep, passphrase string, keySize uint8) (parts []string,
 		return
 	}
 
-	if block, err = aes.NewCipher(hash(passphrase, keySize)); err != nil {
+	if block, err = aes.NewCipher(hashKey(passphrase, keySize)); err != nil {
 		return
 	}
 
