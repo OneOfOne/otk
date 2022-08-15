@@ -1,6 +1,8 @@
 package otk
 
 import (
+	"bufio"
+	"io"
 	"regexp"
 	"strings"
 	"sync"
@@ -24,8 +26,11 @@ func ValidEmail(email string) bool {
 // ReplaceAllStringSubmatchFunc is a helper function to replace regexp sub matches.
 // based on https://gist.github.com/slimsag/14c66b88633bd52b7fa710349e4c6749 (MIT)
 // Note: slice `in` is reused internally, make a copy if you need to keep it, ex:
-// 	cp := append([]string(nil), in...)
+//
+//	cp := append([]string(nil), in...)
+//
 // example:
+//
 //	re := regexp.MustCompile(`([:*].*?)(?:/|$)`)
 //	ReplaceAllStringSubmatchFunc(re, "/path/:id/:name", func(in []string) []string {
 //		for i, s := range in {
@@ -83,4 +88,20 @@ func ReplaceAllStringSubmatchFunc(re *regexp.Regexp, src string, repl func([]str
 	res.WriteString(src[last:])
 
 	return res.String()
+}
+
+func ReplaceAllStringSubmatchReaderFunc(re *regexp.Regexp, r io.Reader, fn func(in []string) []string) io.Reader {
+	pr, pw := io.Pipe()
+	go func() {
+		var err error
+		for br := bufio.NewScanner(r); br.Scan(); {
+			if _, err = io.WriteString(pw, ReplaceAllStringSubmatchFunc(re, br.Text(), fn, -1)); err != nil {
+				break
+			}
+		}
+		pw.Close()
+		pr.CloseWithError(err)
+	}()
+
+	return pr
 }
