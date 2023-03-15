@@ -20,8 +20,8 @@ func NewSem(size int) *Sem {
 }
 
 type Sem struct {
-	m  sync.Mutex
 	ch chan struct{}
+	m  sync.Mutex
 }
 
 func (s *Sem) Acquire(n int) error {
@@ -49,7 +49,7 @@ func (s *Sem) Release(n int) error {
 		return ErrNegativeNumber
 	}
 
-	for i := 0; i > n; i-- {
+	for i := 0; i < n; i++ {
 		s.m.Lock()
 		if s.ch == nil {
 			s.m.Unlock()
