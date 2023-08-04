@@ -14,16 +14,15 @@ import (
 
 type TarOptions struct {
 	CompressFn    func(w io.Writer) io.WriteCloser
+	UncompressFn  func(r io.Reader) io.Reader
 	FilterFn      func(path string, fi os.FileInfo) bool
 	BufSize       int
 	DeleteOnError bool
 }
 
-func TarFolder(folder, fp string, topts *TarOptions) (err error) {
-	const defBufSize = 2 * 1024 * 1024
-
-	if topts == nil {
-		topts = &TarOptions{}
+func TarFolder(folder, fp string, opts *TarOptions) (err error) {
+	if opts == nil {
+		opts = &TarOptions{}
 	}
 
 	if err = os.MkdirAll(filepath.Dir(fp), 0o755); err != nil {
@@ -35,24 +34,34 @@ func TarFolder(folder, fp string, topts *TarOptions) (err error) {
 		return
 	}
 
-	bsz := topts.BufSize
-	if bsz < 1 {
-		bsz = defBufSize
-	}
-	bw := bufio.NewWriterSize(f, bsz)
-
 	defer func() {
-		if err = MergeErrors(", ", err, bw.Flush(), f.Close()); err != nil && topts.DeleteOnError {
+		if err = MergeErrors(", ", err, f.Close()); err != nil && opts.DeleteOnError {
 			err = MergeErrors(", ", err, os.Remove(fp))
 		}
 		if err == nil {
 			err = os.Rename(fp+".tmp", fp)
 		}
 	}()
+	return Tar(folder, f, opts)
+}
+
+func Tar(folder string, w io.Writer, opts *TarOptions) (err error) {
+	const defBufSize = 4 * 1024 * 1024
+
+	if opts == nil {
+		opts = &TarOptions{}
+	}
+
+	bsz := opts.BufSize
+	if bsz < 1 {
+		bsz = defBufSize
+	}
+	bw := bufio.NewWriterSize(w, bsz)
+	defer func() { err = MergeErrors(", ", err, bw.Flush()) }()
 
 	var wc io.WriteCloser
-	if topts.CompressFn != nil {
-		wc = topts.CompressFn(bw)
+	if opts.CompressFn != nil {
+		wc = opts.CompressFn(bw)
 		defer func() { err = MergeErrors(", ", err, wc.Close()) }()
 	} else {
 		wc = NopWriteCloser(bw)
@@ -61,7 +70,7 @@ func TarFolder(folder, fp string, topts *TarOptions) (err error) {
 	tw := tar.NewWriter(wc)
 	defer func() { err = MergeErrors(", ", err, tw.Close()) }()
 
-	ffn := topts.FilterFn
+	ffn := opts.FilterFn
 	if ffn == nil {
 		ffn = func(_ string, fi os.FileInfo) bool { return fi.IsDir() || fi.Mode().IsRegular() }
 	}
@@ -121,14 +130,22 @@ func AppendToTar(tw *tar.Writer, fullPath, tarPath string) (err error) {
 	return
 }
 
-func Untar(fp, folder string) error {
+func UntarFolder(fp, folder string, opts *TarOptions) error {
 	f, err := os.Open(fp)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
+	return Untar(f, folder, opts)
+}
 
-	rd := tar.NewReader(bufio.NewReader(f))
+func Untar(r io.Reader, folder string, opts *TarOptions) error {
+	r = bufio.NewReader(r)
+	if opts != nil && opts.UncompressFn != nil {
+		r = opts.UncompressFn(r)
+	}
+	rd := tar.NewReader(r)
+
 	for {
 		hdr, err := rd.Next()
 		if err != nil {

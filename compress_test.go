@@ -22,7 +22,7 @@ func TestTarFolder(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := Untar(fp, dp); err != nil {
+	if err := UntarFolder(fp, dp, nil); err != nil {
 		t.Fatal(err)
 	}
 	t.Log(filepath.Glob(filepath.Join(dp, "*")))
