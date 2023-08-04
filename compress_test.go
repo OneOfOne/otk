@@ -1,9 +1,6 @@
 package otk
 
 import (
-	"compress/gzip"
-	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,22 +8,22 @@ import (
 )
 
 func TestTarFolder(t *testing.T) {
-	dp, err := ioutil.TempDir("", "compress")
-	if err != nil {
-		t.Fatal(err)
-	}
+	dp := t.TempDir()
 	//	defer os.RemoveAll(dp)
 
-	fp := filepath.Join(dp, "otk.tgz")
-	err = TarFolder(prefixPath /* full path to this package */, fp, &TarOptions{
-		CompressFn: func(w io.Writer) io.WriteCloser { return gzip.NewWriter(w) },
+	fp := filepath.Join(dp, "otk.tar")
+	err := TarFolder(prefixPath /* full path to this package */, fp, &TarOptions{
 		FilterFn: func(path string, fi os.FileInfo) bool {
 			return fi.IsDir() || strings.HasSuffix(path, ".go")
 		},
 		DeleteOnError: true,
 	})
-
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	if err := Untar(fp, dp); err != nil {
+		t.Fatal(err)
+	}
+	t.Log(filepath.Glob(filepath.Join(dp, "*")))
 }

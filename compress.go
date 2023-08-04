@@ -121,6 +121,41 @@ func AppendToTar(tw *tar.Writer, fullPath, tarPath string) (err error) {
 	return
 }
 
+func Untar(fp, folder string) error {
+	f, err := os.Open(fp)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	rd := tar.NewReader(bufio.NewReader(f))
+	for {
+		hdr, err := rd.Next()
+		if err != nil {
+			if err == io.EOF {
+				err = nil
+			}
+			return err
+		}
+		if hdr.Typeflag != tar.TypeReg {
+			continue
+		}
+		p := filepath.Join(folder, hdr.Name)
+
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			return err
+		}
+
+		if err = CopyOnWriteFile(p, func(w io.Writer) error {
+			_, err := io.Copy(w, rd)
+			return err
+		}); err != nil {
+			return err
+		}
+
+	}
+}
+
 func Unzip(rt io.ReaderAt, dst string, filter func(path string, f *zip.File) bool) (err error) {
 	var (
 		zr   *zip.Reader
