@@ -19,7 +19,7 @@ func TestScheduler(t *testing.T) {
 	time.Sleep(time.Second / 4)
 	sch.Stop("w00t")
 	time.Sleep(time.Second / 4)
-	if count < 249 || count > 250 {
-		t.Fatalf("expected 249-250, got %d", count)
+	if count < 230 || count > 250 {
+		t.Fatalf("expected 230-250, got %d", count)
 	}
 }

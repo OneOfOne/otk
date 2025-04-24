@@ -63,7 +63,7 @@ func TestCoW(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if m := fi.Mode(); m != 0645 {
+	if m := fi.Mode(); m != 0644 {
 		t.Fatalf("expected 0644, got 0%o", m)
 	}
 }
