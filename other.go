@@ -63,15 +63,19 @@ func MergeMap(dst, src M) M {
 		return src
 	}
 	for k, v := range src {
-		if v, ok := v.(M); ok {
+		// Check if the value is a nested map
+		if vMap, ok := v.(M); ok {
+			if len(vMap) == 0 {
+				// Skip empty map
+				continue
+			}
 			if dv, ok := dst[k].(M); ok {
-				MergeMap(dv, v)
+				MergeMap(dv, vMap)
 				continue
 			}
 		}
-		if v == nil {
-			delete(dst, k)
-		} else {
+		// If value is not nil, set it in dst
+		if v != nil {
 			dst[k] = v
 		}
 	}
