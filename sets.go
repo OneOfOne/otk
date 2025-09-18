@@ -1,6 +1,10 @@
 package otk
 
-import "go.oneofone.dev/otk/sets"
+import (
+	"iter"
+
+	"go.oneofone.dev/otk/sets"
+)
 
 type (
 	Set      = sets.Set
@@ -10,6 +14,10 @@ type (
 
 func NewSet(keys ...string) Set {
 	return sets.SetOf(keys...)
+}
+
+func NewSetSeq(keys iter.Seq[string]) Set {
+	return sets.SetOfSeq(keys)
 }
 
 func NewSafeSet(keys ...string) *SafeSet {

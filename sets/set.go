@@ -4,20 +4,22 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"iter"
+	"maps"
 	"sort"
 	"unsafe"
 )
-
-func boolp(b bool) *bool {
-	return &b
-}
 
 var empty struct{}
 
 func SetOf(keys ...string) Set {
 	s := Set{}
-	s.Add(keys...)
-	return s
+	return s.Add(keys...)
+}
+
+func SetOfSeq(keys iter.Seq[string]) Set {
+	s := Set{}
+	return s.AddSeq(keys)
 }
 
 // Set is a simple set.
@@ -30,12 +32,28 @@ func (s Set) init() Set {
 	return s
 }
 
+func (s *Set) SetSeq(keys iter.Seq[string]) Set {
+	ss := s.AddSeq(keys)
+	if *s == nil {
+		*s = ss
+	}
+	return ss
+}
+
 func (s *Set) Set(keys ...string) Set {
 	ss := s.Add(keys...)
 	if *s == nil {
 		*s = ss
 	}
 	return ss
+}
+
+func (s Set) AddSeq(keys iter.Seq[string]) Set {
+	s = s.init()
+	for k := range keys {
+		s[k] = empty
+	}
+	return s
 }
 
 func (s Set) Add(keys ...string) Set {
@@ -62,9 +80,7 @@ func (s *Set) AddIfNotExists(key string) bool {
 
 func (s Set) Clone() Set {
 	ns := make(Set, len(s))
-	for k, v := range s {
-		ns[k] = v
-	}
+	maps.Copy(ns, s)
 	return ns
 }
 
@@ -187,5 +203,5 @@ func (s *Set) UnmarshalJSON(data []byte) (err error) {
 	if err = json.Unmarshal(data, &keys); err == nil {
 		s.Set(keys...)
 	}
-	return
+	return err
 }
